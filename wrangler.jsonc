@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "visitor-counter",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-20",
+  "vars": {
+    "SITES": "{\"6nimmt\":[\"https://6nimmt.hellojyp.com\"],\"map-for-ppt\":[\"https://map.hellojyp.com\"]}",
+    "TIME_ZONE": "Asia/Seoul"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "visitor-counter",
+    "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+    "migrations_dir": "migrations"
+  }],
+  "triggers": { "crons": ["17 18 * * *"] }
+}

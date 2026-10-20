@@ -1,0 +1,13 @@
+{
+  "name": "visitor-counter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "db:local": "npx wrangler d1 migrations apply visitor-counter --local",
+    "db:remote": "npx wrangler d1 migrations apply visitor-counter --remote"
+  }
+}
