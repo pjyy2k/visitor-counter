@@ -11,9 +11,9 @@ export const adminPage = `<!doctype html>
 <section id="login-panel" class="panel narrow" hidden><h2>관리자 로그인</h2>
 <div id="setup" hidden><h3>처음 오셨네요. 비밀번호를 설정하세요.</h3>
 <p class="hint">이 서비스의 관리자 비밀번호입니다. 최초 한 번만 설정합니다.</p>
-<form id="setup-form" class="stack"><label>새 관리자 비밀번호<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label>
-<label>비밀번호 확인<input name="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label>
-<p class="hint">12자 이상으로 입력하세요. 비밀번호는 해시로 저장됩니다.</p>
+<form id="setup-form" class="stack"><label>새 관리자 비밀번호<input name="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" required></label>
+<label>비밀번호 확인<input name="confirmPassword" type="password" autocomplete="new-password" minlength="10" maxlength="256" required></label>
+<p class="hint">10자 이상으로 입력하세요. 비밀번호는 해시로 저장됩니다.</p>
 <button>비밀번호 설정하고 시작하기</button></form></div>
 <form id="login-form" class="stack"><label>관리자 비밀번호<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label>
 <button>로그인</button></form></section>

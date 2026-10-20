@@ -40,9 +40,9 @@ async function createSession(db) {
 export async function setup(request, env) {
   if (await credentials(env.DB)) throw new HttpError(409, '관리자 비밀번호가 이미 설정되어 있습니다. 로그인해주세요.');
   const data = await readJson(request);
-  if (!data || typeof data.password !== 'string' || data.password.length < 12 || data.password.length > 256
+  if (!data || typeof data.password !== 'string' || data.password.length < 10 || data.password.length > 256
       || data.password !== data.confirmPassword) {
-    throw new HttpError(400, '비밀번호를 12~256자로 입력하고 동일하게 확인해주세요.');
+    throw new HttpError(400, '비밀번호를 10~256자로 입력하고 동일하게 확인해주세요.');
   }
   const salt = crypto.randomUUID();
   const hash = await passwordHash(data.password, salt);

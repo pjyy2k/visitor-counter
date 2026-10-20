@@ -90,7 +90,9 @@ test('web setup, login, registration, embed generation, edits and logout', async
   assert.equal((await (await call('/api/session')).json()).configured, false);
   assert.equal((await call('/api/sites')).status, 401);
   assert.equal((await call('/api/setup', 'POST', { password: 'short' })).status, 400);
-  const password = 'test-only-password-2026';
+  const shortPassword = '123456789';
+  assert.equal((await call('/api/setup', 'POST', { password: shortPassword, confirmPassword: shortPassword })).status, 400);
+  const password = '1234567890';
   const setup = { password, confirmPassword: password };
   assert.equal((await call('/api/setup', 'POST', setup, 'https://evil.example')).status, 403);
   const created = await call('/api/setup', 'POST', setup);
