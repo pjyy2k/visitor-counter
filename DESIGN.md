@@ -46,4 +46,6 @@ Borders-only depth. Radius scale: controls 8px, panels 12px. No hero illustratio
 ## 8. Accessibility & verification gaps
 Target WCAG AA: visible labels, focus outline, semantic headings, live status,
 readable contrast, no layout-dependent content, responsive single column.
-Real-browser screenshots, mobile layout and Lighthouse remain unverified until the browser bridge works.
+Desktop and 390px mobile authenticated management/history screens were inspected in Chrome.
+Korean helper text uses keep-all to avoid breaking words; URLs and code may wrap as needed.
+Lighthouse scores have not been measured. Password rotation and active-state effects are covered by API integration tests.
