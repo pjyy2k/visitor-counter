@@ -3,6 +3,7 @@
   "name": "visitor-counter",
   "main": "src/worker.js",
   "compatibility_date": "2026-10-20",
+  "routes": [{ "pattern": "vc.hellojyp.com", "custom_domain": true }],
   "vars": {
     "SITES": "{\"6nimmt\":[\"https://6nimmt.hellojyp.com\"],\"map-for-ppt\":[\"https://map.hellojyp.com\"]}",
     "TIME_ZONE": "Asia/Seoul"
@@ -10,7 +11,7 @@
   "d1_databases": [{
     "binding": "DB",
     "database_name": "visitor-counter",
-    "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+    "database_id": "b64af875-6c31-4184-bd93-a5aef0bb68fc",
     "migrations_dir": "migrations"
   }],
   "triggers": { "crons": ["17 18 * * *"] }
