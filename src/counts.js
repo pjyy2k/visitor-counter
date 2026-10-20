@@ -14,7 +14,8 @@ export async function countVisit(db, visit) {
       ON CONFLICT(site,day) DO UPDATE SET views=views+1`).bind(site, day),
     db.prepare(`INSERT INTO site_counts(site,views) VALUES(?,1)
       ON CONFLICT(site) DO UPDATE SET views=views+1`).bind(site),
-    db.prepare('INSERT OR IGNORE INTO daily_visitors VALUES(?,?,?)').bind(site, day, visitor)
+    db.prepare('INSERT OR IGNORE INTO daily_visitors VALUES(?,?,?)').bind(site, day, visitor),
+    db.prepare('UPDATE registered_sites SET last_seen_at=? WHERE id=?').bind(Date.now(), site)
   ]);
 }
 

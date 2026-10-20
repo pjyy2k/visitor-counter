@@ -23,7 +23,13 @@ export const adminPage = `<!doctype html>
 <label>사이트 주소<input name="url" placeholder="6nimmt.hellojyp.com" maxlength="2048" required inputmode="url" aria-describedby="url-hint"></label>
 <p id="url-hint" class="hint">https:// 없이 입력해도 됩니다. 같은 도메인의 다른 페이지도 각각 등록할 수 있습니다.</p>
 <button>등록하고 코드 만들기</button></form>
-<div class="note"><strong>숫자를 읽는 기준</strong><p>오늘 방문자: 하루에 브라우저당 1회<br>누적 방문: 일별 방문자 수의 합계<br>조회수: 새로고침 포함</p></div></section>
+<div class="note"><strong>숫자를 읽는 기준</strong><p>오늘 방문자: 하루에 브라우저당 1회<br>누적 방문: 일별 방문자 수의 합계<br>조회수: 새로고침 포함</p></div>
+<details><summary>관리자 비밀번호 변경</summary><form id="password-form" class="stack">
+<label>현재 비밀번호<input name="currentPassword" type="password" autocomplete="current-password" maxlength="256" required></label>
+<label>새 비밀번호<input name="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" required></label>
+<label>새 비밀번호 확인<input name="confirmPassword" type="password" autocomplete="new-password" minlength="10" maxlength="256" required></label>
+<p class="hint">10자 이상으로 설정하세요. 변경하면 모든 기기에서 로그아웃됩니다.</p>
+<button>비밀번호 변경</button></form></details></section>
 <section aria-labelledby="sites-title"><div class="cluster"><div><p class="eyebrow">02 / INSTALL</p><h2 id="sites-title">등록된 사이트 <span id="site-count"></span></h2></div>
 <button id="refresh" class="secondary">새로고침</button></div>
 <p class="hint">코드를 각 페이지의 &lt;/body&gt; 앞에 한 번만 삽입하세요.</p>
@@ -44,4 +50,5 @@ input,textarea,button{font:inherit;border-radius:var(--radius)}input,textarea{di
 button{cursor:pointer;min-height:44px;border:1px solid transparent;padding:var(--s1) var(--s3);background:var(--accent);color:var(--surface);font-weight:600;font-size:var(--small)}button:hover{background:var(--hover)}button:active{transform:translateY(1px)}button.secondary{background:var(--surface);border-color:var(--border);color:var(--ink)}button.secondary:hover{background:var(--bg)}button:disabled{opacity:.6;cursor:wait}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}.note{border-top:1px solid var(--border);margin-top:var(--s4);padding-top:var(--s4);font-size:var(--small)}.note p{color:var(--muted);margin:var(--s1) 0 0}
 .site-url{overflow-wrap:anywhere;font-size:var(--small);color:var(--muted)}.metrics{display:flex;flex-wrap:wrap;gap:var(--s4);margin-block:var(--s3)}.metrics span{font-size:var(--small);color:var(--muted)}.metrics b{display:block;color:var(--ink);font-size:var(--title);font-variant-numeric:tabular-nums}.error{color:var(--error)}.success{color:var(--success)}#status:empty{display:none}details{margin-top:var(--s3)}summary{cursor:pointer;color:var(--muted);min-height:44px}footer{font-size:var(--small);border-top:1px solid var(--border)}footer a{margin-left:var(--s2)}
+.history-table{width:100%;border-collapse:collapse;font-size:var(--small);table-layout:fixed;margin-top:var(--s3)}.history-table th,.history-table td{text-align:left;padding:var(--s1);border-bottom:1px solid var(--border);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.history-table caption{text-align:left;color:var(--muted);padding-bottom:var(--s1)}meter{display:block;width:100%;height:var(--s3)}button[aria-pressed=true]{font-weight:800;text-decoration:underline}button[aria-pressed=true]::before{content:'✓ '}
 @media(max-width:768px){.workspace{grid-template-columns:minmax(0,1fr)}main{padding-block:var(--s5)}header,main,footer{padding-inline:var(--s3)}.panel{padding:var(--s3)}}`;

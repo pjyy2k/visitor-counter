@@ -1,34 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { database } from '../test-support/database.js';
 import worker from '../src/worker.js';
 import { calendarDay, countVisit, readCounts } from '../src/counts.js';
 import { parseSite } from '../src/registry.js';
 import { widget } from '../src/widget.js';
 import { runInNewContext } from 'node:vm';
-
-function database() {
-  const sqlite = new DatabaseSync(':memory:');
-  sqlite.exec(readFileSync(new URL('../migrations/0001_initial.sql', import.meta.url), 'utf8'));
-  sqlite.exec(readFileSync(new URL('../migrations/0002_registry.sql', import.meta.url), 'utf8'));
-  const prepare = (sql) => {
-    let values = [];
-    return {
-      bind(...params) { values = params; return this; },
-      async run() { return { meta: sqlite.prepare(sql).run(...values) }; },
-      async first() { return sqlite.prepare(sql).get(...values); },
-      async all() { return { results: sqlite.prepare(sql).all(...values) }; }
-    };
-  };
-  return { prepare, async batch(statements) {
-    sqlite.exec('BEGIN');
-    try {
-      for (const statement of statements) await statement.run();
-      sqlite.exec('COMMIT');
-    } catch (error) { sqlite.exec('ROLLBACK'); throw error; }
-  } };
-}
 
 test('same-day deduplication, site isolation, new-day visit and retained totals', async () => {
   const db = database();
@@ -122,7 +99,7 @@ test('web setup, login, registration, embed generation, edits and logout', async
   assert.equal(listed.sites[0].counts.todayVisitors, 1);
   assert.equal((await call('/api/logout', 'POST', {})).status, 200);
   assert.equal((await call('/api/sites')).status, 401);
-  assert.equal((await call('/api/login', 'POST', { password: 'wrong' })).status, 401);
+  assert.equal((await call('/api/login', 'POST', { password: 'wrong' })).status, 403);
   const logged = await call('/api/login', 'POST', { password });
   assert.equal(logged.status, 200);
   cookie = logged.headers.get('Set-Cookie').split(';')[0];

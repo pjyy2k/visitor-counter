@@ -31,6 +31,10 @@ disabled and pending states. Status: inline live region, error/success text.
 Site entry: heading, URL, metric labels, editable registration form and code region.
 Code region: readonly textarea, copy button and copy-failure fallback through manual selection.
 Empty state: explains registration; loading and error states remain explicit.
+Management controls: password-change details with current/new/confirmation fields;
+site active-state button with confirmation; last collection timestamp as plain text.
+History: progressive disclosure, 7/30-day buttons with aria-pressed, daily table with
+native meter bars plus exact visitor/view values. No chart dependency or inline style needed.
 
 ## 6. Motion & interaction
 No decorative animation. Buttons give immediate disabled/pending feedback.

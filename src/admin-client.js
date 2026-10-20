@@ -1,3 +1,5 @@
+import { historyClient } from './history-client.js';
+
 export const adminClient = String.raw`
 const $ = (selector) => document.querySelector(selector);
 function status(message, error = false) {
@@ -38,6 +40,18 @@ function sitePanel(site) {
   const link = element('a', site.url, 'site-url');
   link.href = site.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
   panel.append(link);
+  const lastSeen = site.last_seen_at ? new Date(site.last_seen_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '';
+  panel.append(element('p', (site.active ? '수집 중' : '비활성화 · 수집 중지') + ' · '
+    + (lastSeen ? '마지막 수집 ' + lastSeen + ' (한국시간)' : '수집 시각 미확인 · 설치 페이지에 접속한 뒤 새로고침하세요.'), 'hint'));
+  const toggle = element('button', site.active ? '비활성화' : '다시 활성화', 'secondary');
+  toggle.addEventListener('click', () => {
+    if (!confirm(site.active ? '방문 수집을 중지할까요? 기존 통계와 삽입 코드는 보존됩니다.' : '방문 수집을 다시 시작할까요?')) return;
+    pending(toggle, async () => {
+      await api('/api/sites/' + site.id + '/active', { method: 'PUT', body: JSON.stringify({ active: !site.active }) });
+      await loadSites(); status(site.active ? '수집을 중지했습니다. 기존 통계는 보존됩니다.' : '수집을 다시 시작했습니다.');
+    });
+  });
+  panel.append(toggle);
   const metrics = element('div', undefined, 'metrics');
   for (const [label, value] of [['오늘 방문자', site.counts.todayVisitors], ['누적 방문', site.counts.totalVisitorDays], ['전체 조회수', site.counts.totalViews]]) {
     const metric = element('span', label);
@@ -68,7 +82,7 @@ function sitePanel(site) {
       await loadSites(); status('사이트 정보를 수정했습니다. 기존 삽입 코드는 계속 사용할 수 있습니다.');
     });
   });
-  details.append(form); panel.append(details); return panel;
+  details.append(form); panel.append(details, historyPanel(site)); return panel;
 }
 async function loadSites() {
   const { sites } = await api('/api/sites');
@@ -99,6 +113,14 @@ $('#site-form').addEventListener('submit', (event) => {
   });
 });
 $('#refresh').addEventListener('click', () => pending($('#refresh'), async () => { await loadSites(); status('집계를 새로 불러왔습니다.'); }));
+$('#password-form').addEventListener('submit', (event) => {
+  event.preventDefault(); const form = event.currentTarget;
+  pending(form.querySelector('button'), async () => {
+    await api('/api/password', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(form))) });
+    form.reset(); $('#sites').replaceChildren(); showWorkspace(false);
+    status('비밀번호를 변경하고 모든 로그인을 종료했습니다. 새 비밀번호로 로그인해주세요.');
+  });
+});
 $('#logout').addEventListener('click', () => pending($('#logout'), async () => {
   await api('/api/logout', { method: 'POST', body: '{}' });
   $('#sites').replaceChildren(); showWorkspace(false); status('로그아웃했습니다.');
@@ -111,4 +133,4 @@ $('#logout').addEventListener('click', () => pending($('#logout'), async () => {
     if (state.authenticated) await loadSites();
   } catch (error) { status(error.message, true); }
 })();
-`;
+` + historyClient;

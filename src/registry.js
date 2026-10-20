@@ -1,5 +1,6 @@
 import { calendarDay, readCounts } from './counts.js';
-import { authenticated, credentials, login, logout, setup } from './auth.js';
+import { authenticated, changePassword, credentials, login, logout, setup } from './auth.js';
+import { readHistory } from './history.js';
 import { adminJson, HttpError, readJson } from './http.js';
 
 export function parseSite(data) {
@@ -23,8 +24,8 @@ export function embedCode(site, base) {
 
 export async function allowedSite(env, site, origin) {
   if (!site || !origin) return false;
-  const registered = await env.DB.prepare('SELECT origin FROM registered_sites WHERE id=?').bind(site).first();
-  if (registered) return registered.origin === origin;
+  const registered = await env.DB.prepare('SELECT origin,active FROM registered_sites WHERE id=?').bind(site).first();
+  if (registered) return registered.active === 1 && registered.origin === origin;
   const legacy = JSON.parse(env.SITES || '{}');
   return Object.hasOwn(legacy, site) && Array.isArray(legacy[site]) && legacy[site].includes(origin);
 }
@@ -43,6 +44,7 @@ export async function registryRoute(request, env) {
   if (url.pathname === '/api/login' && request.method === 'POST') return login(request, env);
   if (!await authenticated(request, env)) throw new HttpError(401, '관리자 로그인이 필요합니다.');
   if (url.pathname === '/api/logout' && request.method === 'POST') return logout(request, env);
+  if (url.pathname === '/api/password' && request.method === 'POST') return changePassword(request, env);
   if (url.pathname === '/api/sites' && request.method === 'GET') {
     const { results } = await env.DB.prepare('SELECT * FROM registered_sites ORDER BY created_at DESC, id').all();
     const sites = await Promise.all(results.map(async (site) => ({ ...site,
@@ -57,8 +59,23 @@ export async function registryRoute(request, env) {
       .bind(site.id, site.name, site.url, site.origin, site.created_at).run();
     return adminJson({ ...site, code: embedCode(site, url.origin) }, 201);
   }
-  const match = url.pathname.match(/^\/api\/sites\/(site-[a-f0-9-]{36})$/);
-  if (match && request.method === 'PUT') {
+  const match = url.pathname.match(/^\/api\/sites\/(site-[a-f0-9-]{36})(?:\/(history|active))?$/);
+  if (match && match[2] === 'history' && request.method === 'GET') {
+    const days = Number(url.searchParams.get('days') || '7');
+    if (![7, 30].includes(days)) throw new HttpError(400, '기간은 7일 또는 30일을 선택해주세요.');
+    const existing = await env.DB.prepare('SELECT id FROM registered_sites WHERE id=?').bind(match[1]).first();
+    if (!existing) throw new HttpError(404, '등록된 사이트가 없습니다.');
+    return adminJson({ history: await readHistory(env.DB, { site: match[1], days, timeZone: env.TIME_ZONE }) });
+  }
+  if (match && match[2] === 'active' && request.method === 'PUT') {
+    const data = await readJson(request);
+    if (!data || typeof data.active !== 'boolean') throw new HttpError(400, '활성 상태를 확인해주세요.');
+    const result = await env.DB.prepare('UPDATE registered_sites SET active=? WHERE id=?')
+      .bind(Number(data.active), match[1]).run();
+    if (result.meta.changes !== 1) throw new HttpError(404, '등록된 사이트가 없습니다.');
+    return adminJson({ ok: true });
+  }
+  if (match && !match[2] && request.method === 'PUT') {
     const site = parseSite(await readJson(request));
     const existing = await env.DB.prepare('SELECT id FROM registered_sites WHERE id=?').bind(match[1]).first();
     if (!existing) throw new HttpError(404, '등록된 사이트가 없습니다.');
