@@ -10,7 +10,7 @@
   },
   "d1_databases": [{
     "binding": "DB",
-    "database_name": "visitor-counter",
+    "database_name": "db",
     "database_id": "b64af875-6c31-4184-bd93-a5aef0bb68fc",
     "migrations_dir": "migrations"
   }],

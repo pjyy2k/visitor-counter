@@ -3,6 +3,28 @@
 여러 정적 사이트에서 함께 사용하는 Cloudflare Worker + D1 방문자 카운터입니다.
 사이트마다 스크립트 한 줄을 삽입하면 됩니다. 별도 프런트엔드 서버는 필요하지 않습니다.
 
+## 웹에서 시작하기
+
+1. https://vc.hellojyp.com 에 접속합니다.
+2. 최초 접속 시 관리자 비밀번호와 확인 값을 입력합니다(12~256자).
+3. 사이트 이름과 URL을 등록합니다. `https://`는 생략할 수 있습니다.
+4. 등록된 사이트 카드의 **코드 복사**를 눌러 각 페이지의 `</body>` 앞에 삽입합니다.
+5. 사이트 주소를 수정하더라도 ID와 기존 집계, 삽입 코드는 유지됩니다.
+
+관리자 비밀번호는 D1에 salt와 PBKDF2-SHA256(100,000회) 해시로 저장합니다.
+최초 설정은 비밀번호가 없는 동안에만 가능하며, 동시에 요청해도 한 번만 설정됩니다.
+최초 설정을 완료한 사람이 관리자가 되므로 배포 직후 본인이 설정하세요.
+로그인은 12시간 유효한 HttpOnly/Secure/SameSite=Strict 쿠키를 사용합니다.
+Worker Secret 설정은 필요하지 않습니다. 로그인 시도는 IP를 직접 저장하지 않고
+시간대별 salt 기반 해시로 제한합니다(시간당 20회). 잊어버린 비밀번호의 자동 복구 기능은 없습니다.
+
+같은 도메인의 여러 페이지도 별도 등록할 수 있습니다. 각 페이지에 해당 ID의 코드를 넣으면
+분리 집계됩니다. 주소의 경로는 등록 정보이며, 수집 API의 접근 허용 검사는 Origin(도메인) 기준입니다.
+기존 `SITES` 설정에 있는 ID도 계속 작동하지만 관리 목록에는 웹에서 등록한 사이트만 표시됩니다.
+
+이번 업데이트에는 `0002_registry.sql`이 필요합니다. Cloudflare Git 빌드의 **배포 명령**을
+`npm run deploy`로 설정하면 새 마이그레이션을 먼저 적용한 뒤 배포합니다.
+
 ## 집계 기준
 
 - `todayViews`: 오늘 스크립트가 실행된 페이지 조회수. 새로고침도 포함합니다.
@@ -15,14 +37,15 @@
 
 ## 배포
 
-Node.js 22 이상과 Cloudflare 계정이 필요합니다. 테스트는 `node:sqlite`를 제공하는 Node.js 22.13 이상을 사용합니다.
+Node.js 22.13 이상과 Cloudflare 계정이 필요합니다.
 
 ```sh
 npx wrangler login
-npx wrangler d1 create visitor-counter
+npx wrangler d1 create db
 ```
 
-출력된 `database_id`로 `wrangler.jsonc`의 `REPLACE_WITH_D1_DATABASE_ID`를 교체합니다.
+현재 `wrangler.jsonc`에는 운영 D1 ID와 `vc.hellojyp.com`이 설정되어 있습니다.
+다른 계정에서 사용할 때에는 새 데이터베이스 ID, 이름, 도메인으로 교체합니다.
 `SITES`에는 실제 사이트 식별자와 허용 Origin을 등록합니다. 아래 도메인은 예시이므로 실제 주소로 수정하세요.
 
 ```json
@@ -35,12 +58,11 @@ npx wrangler d1 create visitor-counter
 Origin에는 경로와 끝의 `/`를 넣지 않습니다. 한 사이트에 여러 도메인을 등록하면 집계는 공유되지만 localStorage는 도메인별로 분리됩니다.
 
 ```sh
-npm run db:remote
 npm run deploy
 ```
 
-Cloudflare Git 연동 시 빌드 명령은 필요하지 않습니다. 배포 명령은 `npx wrangler deploy`입니다.
-원격 마이그레이션은 최초 배포 전에 적용하세요. D1 바인딩 이름은 반드시 `DB`로 설정합니다.
+Cloudflare Git 연동 시 빌드 명령은 필요하지 않습니다. 배포 명령은 `npm run deploy`입니다.
+D1 바인딩 이름은 반드시 `DB`로 설정합니다. 빌드용 토큰에는 이 D1 데이터베이스에 대한 편집 권한이 필요합니다.
 Workers 대시보드에서 커스텀 도메인을 연결할 수도 있습니다.
 
 ## 정적 사이트에 삽입
@@ -50,7 +72,7 @@ Worker의 실제 주소로 `src`를 바꾸고 각 사이트에 고유한 `data-s
 
 ```html
 <small data-visitor-counter aria-live="polite">—</small>
-<script defer src="https://visitor-counter.YOUR-SUBDOMAIN.workers.dev/counter.js"
+<script defer src="https://vc.hellojyp.com/counter.js"
         data-site="6nimmt"></script>
 ```
 
@@ -100,7 +122,7 @@ npm run dev
 - D1 rows read/write는 요청 횟수와 같지 않으며 실제 실행 계획과 인덱스 갱신에 따라 달라집니다.
 - Origin 허용 목록은 브라우저의 무단 삽입을 제한하지만 인증 수단은 아닙니다. 외부 프로그램은 Origin과 UUID를 위조할 수 있어 통계 조작을 완전히 막지 못합니다. 필요한 경우 Cloudflare WAF/rate limiting 규칙을 적용하세요.
 - 방문자 ID는 보안 토큰이 아니며, 공개 정적 페이지에 비밀 API 키를 넣지 않습니다.
-- 봇 필터링, 전체 기간 고유 방문자, 관리자 UI는 포함하지 않습니다.
+- 봇 필터링과 전체 기간 고유 방문자는 포함하지 않습니다.
 - 일별 방문자 ID 정리는 매일 UTC 18:17(KST 다음 날 03:17)에 수행합니다. 일별/전체 집계는 삭제하지 않습니다.
 
 배포 후 허용/비허용 Origin, 같은 브라우저 새로고침, 다른 브라우저 방문, 사이트 간 분리 동작을 실제 도메인에서 확인하세요.

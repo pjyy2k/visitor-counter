@@ -6,8 +6,8 @@
   "scripts": {
     "test": "node --test",
     "dev": "npx wrangler dev",
-    "deploy": "npx wrangler deploy",
-    "db:local": "npx wrangler d1 migrations apply visitor-counter --local",
-    "db:remote": "npx wrangler d1 migrations apply visitor-counter --remote"
+    "deploy": "npx wrangler d1 migrations apply DB --remote && npx wrangler deploy",
+    "db:local": "npx wrangler d1 migrations apply DB --local",
+    "db:remote": "npx wrangler d1 migrations apply DB --remote"
   }
 }

@@ -1,5 +1,9 @@
 import { calendarDay, countVisit, readCounts } from './counts.js';
 import { widget } from './widget.js';
+import { adminPage, adminStyles } from './admin-page.js';
+import { adminClient } from './admin-client.js';
+import { allowedSite, registryRoute } from './registry.js';
+import { HttpError, adminJson } from './http.js';
 
 function json(data, status, origin) {
   return Response.json(data, { status, headers: {
@@ -12,6 +16,19 @@ function json(data, status, origin) {
 
 async function route(request, env) {
   const url = new URL(request.url);
+  if (request.method === 'GET' && ['/', '/admin', '/admin.js', '/admin.css'].includes(url.pathname)) {
+    const assets = {
+      '/': [adminPage, 'text/html'], '/admin': [adminPage, 'text/html'],
+      '/admin.js': [adminClient, 'text/javascript'], '/admin.css': [adminStyles, 'text/css']
+    };
+    const [body, type] = assets[url.pathname];
+    return new Response(body, { headers: {
+      'Content-Type': type + '; charset=utf-8', 'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
+      'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+    } });
+  }
+  if (url.pathname.startsWith('/api/')) return registryRoute(request, env);
   if (url.pathname === '/counter.js' && request.method === 'GET') {
     return new Response(widget, { headers: {
       'Content-Type': 'text/javascript; charset=utf-8',
@@ -25,9 +42,7 @@ async function route(request, env) {
   if (url.pathname !== '/v1/count') return json({ error: 'Not found' }, 404, 'null');
   const site = url.searchParams.get('site');
   const origin = request.headers.get('Origin');
-  const sites = JSON.parse(env.SITES);
-  if (!site || !Object.hasOwn(sites, site) || !Array.isArray(sites[site])
-      || !origin || !sites[site].includes(origin)) {
+  if (!await allowedSite(env, site, origin)) {
     return json({ error: 'Site or origin not allowed' }, 403, 'null');
   }
   if (request.method === 'OPTIONS') {
@@ -77,11 +92,16 @@ async function route(request, env) {
 export default {
   async fetch(request, env) {
     try { return await route(request, env); }
-    catch { return json({ error: 'Service unavailable' }, 503, request.headers.get('Origin') || 'null'); }
+    catch (error) {
+      if (error instanceof HttpError) return adminJson({ error: error.message }, error.status);
+      return json({ error: 'Service unavailable. D1 migrations and bindings must be configured.' }, 503, request.headers.get('Origin') || 'null');
+    }
   },
   async scheduled(_event, env) {
     // Yesterday's IDs are no longer needed. Aggregate counts are retained.
     await env.DB.prepare('DELETE FROM daily_visitors WHERE day < ?')
       .bind(calendarDay(env.TIME_ZONE || 'Asia/Seoul')).run();
+    await env.DB.prepare('DELETE FROM admin_sessions WHERE expires_at <= ?').bind(Date.now()).run();
+    await env.DB.prepare('DELETE FROM login_attempts WHERE expires_at <= ?').bind(Date.now()).run();
   }
 };
